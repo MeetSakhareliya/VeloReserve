@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
+@EntityListeners(AuditingEntityListener.class)
 public class Reservation {
     @Id
     @GeneratedValue(strategy =  GenerationType.UUID)
@@ -30,12 +32,11 @@ public class Reservation {
     @JoinColumn(name = "userId")
     private User userId;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "reservation")
     private List<ReservationPassenger> passengers;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(32) check (status in ('PENDING', 'CONFIRMED', 'EXPIRED', 'CANCELLED'))")
+    @Column(nullable = false, length = 16)
     private ReservationStatus status; // PENDING, CONFIRMED, EXPIRED
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

@@ -8,6 +8,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
+@Table(name = "users") //user is a reserved keyword in PostgreSQL. That's why seperate keyword
 public class User {
 
     @Id

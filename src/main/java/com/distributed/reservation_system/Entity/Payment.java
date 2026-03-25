@@ -24,6 +24,6 @@ public class Payment {
     private String method;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false,columnDefinition = "varchar(32) check (status in ('PENDING', 'CONFIRMED', 'EXPIRED', 'CANCELLED'))")
+    @Column(nullable = false, length = 16)
     private PaymentStatus status;
 }

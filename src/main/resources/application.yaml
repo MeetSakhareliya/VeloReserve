@@ -2,19 +2,20 @@
   application:
     name: reservation-system
 
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/velo_reserve
-#    username: user
-#    password: password
-#    driver-class-name: org.postgresql.Driver
+  datasource:
+    url: jdbc:postgresql://localhost:5432/velo_reserve
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
 
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        defaulta_batch_fetch_size: 20
+  jpa:
+    hibernate:
+      ddl-auto: update
+      format_sql: true
+    show-sql: true
+    properties:
+      hibernate:
+        default_batch_fetch_size: 20
 #
 #  data:
 #    redis:

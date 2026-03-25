@@ -7,6 +7,8 @@ services:
       POSTGRES_DB: velo_reserve
     ports:
       - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -27,3 +29,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk' # Any base64 string
+
+volumes:
+  pg_data:
