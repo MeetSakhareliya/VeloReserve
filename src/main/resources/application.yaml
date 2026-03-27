@@ -2,6 +2,10 @@
   application:
     name: reservation-system
 
+  sql:
+    init:
+      mode: never
+
   datasource:
     url: jdbc:postgresql://localhost:5432/velo_reserve
     username: user
@@ -9,6 +13,7 @@
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
       format_sql: true

@@ -1,6 +1,6 @@
-package com.distributed.reservation_system.Entity;
+package com.distributed.reservation_system.entity;
 
-import com.distributed.reservation_system.Enum.ReservationStatus;
+import com.distributed.reservation_system.enums.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +18,7 @@ import java.util.UUID;
 public class Reservation {
     @Id
     @GeneratedValue(strategy =  GenerationType.UUID)
-    private UUID id;
+    private UUID id;   //works as a PNR.
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "train_run_id")
@@ -43,7 +43,7 @@ public class Reservation {
     @JoinColumn(name = "paymentId")
     private Payment paymentId;
 
-    @CreatedDate
+    @CreatedDate  //for this to work EntityListeners and EnableJpaAuditing needs to be added,
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }

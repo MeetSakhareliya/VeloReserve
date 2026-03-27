@@ -1,5 +1,6 @@
-package com.distributed.reservation_system.Entity;
+package com.distributed.reservation_system.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +15,7 @@ public class MasterPassenger {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
+    @JsonIgnore
     private User userId;
 
     @Column(nullable = false)

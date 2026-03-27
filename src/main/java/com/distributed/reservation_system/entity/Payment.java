@@ -1,8 +1,7 @@
-package com.distributed.reservation_system.Entity;
+package com.distributed.reservation_system.entity;
 
-import com.distributed.reservation_system.Enum.PaymentStatus;
+import com.distributed.reservation_system.enums.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 

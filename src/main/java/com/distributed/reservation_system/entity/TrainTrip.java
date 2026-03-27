@@ -1,8 +1,7 @@
-package com.distributed.reservation_system.Entity;
+package com.distributed.reservation_system.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,5 +30,5 @@ public class TrainTrip {
     private Integer availableCapacity; // Synchronized with Redis
 
     @Version
-    private Long version; // Last line of defense against race conditions
+    private Long version; // as we are using pessimistid locking we do not require this now. But will keep for double safety and other rare contenation task like changing capacity, designation.
 }

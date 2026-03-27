@@ -1,13 +1,10 @@
-package com.distributed.reservation_system.Entity;
+package com.distributed.reservation_system.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import lombok.Data;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
-import org.springframework.validation.annotation.Validated;
 
 @Entity
 @Getter

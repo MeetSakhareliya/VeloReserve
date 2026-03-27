@@ -1,9 +1,10 @@
-package com.distributed.reservation_system.Entity;
+package com.distributed.reservation_system.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -15,14 +16,18 @@ public class User {
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String mobile;
 
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String password;
 
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
+    private List<MasterPassenger> masterPassengerList;
 }
