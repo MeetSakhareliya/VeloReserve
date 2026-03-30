@@ -15,7 +15,7 @@ public class ReservationPassenger {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id")
-    @JsonIgnore
+    @JsonIgnore //This is important
     private Reservation reservation;
 
     private String name;      // Copied from Master List

@@ -1,60 +1,82 @@
 package com.distributed.reservation_system.service;
 
+import com.distributed.reservation_system.dto.ReservationRequest;
+import com.distributed.reservation_system.dto.ReservationResponse;
 import com.distributed.reservation_system.entity.*;
 import com.distributed.reservation_system.enums.ReservationStatus;
 import com.distributed.reservation_system.exception.BusinessException;
 import com.distributed.reservation_system.exception.SystemException;
 import com.distributed.reservation_system.exception.ValidationException;
+import com.distributed.reservation_system.mapper.EntityMapper;
+import com.distributed.reservation_system.repository.MasterPassengerRepository;
 import com.distributed.reservation_system.repository.ReservationRepository;
 import com.distributed.reservation_system.repository.TrainTripRepository;
+import com.distributed.reservation_system.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.PessimisticLockingFailureException;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Service;
-import org.springframework.web.ErrorResponse;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
     private final TrainTripRepository trainTripRepository;
+    private final UserRepository userRepository;
+    private final MasterPassengerRepository masterPassengerRepository;
     private final ReservationRepository reservationRepository;
+    private final EntityMapper entityMapper;
 
     @Transactional
-    public Reservation bookTicket(Long tripId, List<MasterPassenger> passengerList, User user){
+    public ReservationResponse bookTicket(ReservationRequest reservationRequest){
         TrainTrip trainTrip;
         try{
-            trainTrip = trainTripRepository.findTripWithLock(tripId)
+            trainTrip = trainTripRepository.findTripWithLock(reservationRequest.getTripId())
                     .orElseThrow(()-> new ValidationException("Not a valid trip id. Train trip not found"));
         }catch (PessimisticLockingFailureException ex){
             throw new SystemException("This train is currently in high demand. Please retry.",ex);
         }
 
-
-        if(trainTrip.getAvailableCapacity()<passengerList.size()){
+        List<Long> passengerIds = reservationRequest.getMasterPassengerIdList();
+        List<MasterPassenger> masterPassengerList = masterPassengerRepository.findAllById(passengerIds);  //this will only returns data which are present. So need to check if all ids are available or not.
+        if(trainTrip.getAvailableCapacity()<passengerIds.size()){
             throw new BusinessException("Not enough seats available");
         }
 
-        trainTrip.setAvailableCapacity(trainTrip.getAvailableCapacity()-passengerList.size());
+        if(masterPassengerList.size() != passengerIds.size()){
+            Set<Long> masterListIds = masterPassengerList.stream()
+                    .map(MasterPassenger::getId)
+                    .collect(Collectors.toSet());
+
+            List<Long> missingIds = passengerIds.stream()
+                    .filter(requestId -> !masterListIds.contains(requestId))
+                    .toList();
+
+            throw new ValidationException("The following passenger IDs are invalid: " + missingIds);
+        }
+
+        trainTrip.setAvailableCapacity(trainTrip.getAvailableCapacity()-passengerIds.size());
         trainTripRepository.save(trainTrip);
         //Todo: payment will be done here first.
+
+        User user = userRepository.findById(reservationRequest.getUserId())
+                .orElseThrow(() -> new BusinessException("User not found"));
 
         Reservation reservation = new Reservation();
         reservation.setTrainRun(trainTrip);
         reservation.setUserId(user);
         reservation.setStatus(ReservationStatus.CONFIRMED);
 
-
-
         List<ReservationPassenger> reservationPassengers = new ArrayList<>();
-        passengerList.forEach(p -> reservationPassengers.add(new ReservationPassenger(reservation, p.getName(),p.getAge())));
+        masterPassengerList.forEach(p -> reservationPassengers.add(new ReservationPassenger(reservation, p.getName(),p.getAge())));
         reservation.setPassengers(reservationPassengers);
         reservationRepository.save(reservation);
-        return reservation;
+
+        return entityMapper.toReservationResponse(reservation);
 
         /*
 

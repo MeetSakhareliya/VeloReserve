@@ -10,8 +10,6 @@ public class UserManagerService {
 
     private final UserRepository userRepository;
 
-    public void adduser(){
-//        userRepository.findByN
-    }
+
 
 }
