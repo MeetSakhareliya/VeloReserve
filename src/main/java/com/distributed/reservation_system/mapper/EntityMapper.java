@@ -10,7 +10,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface EntityMapper {
 
-    @Mapping(source="user.id", target="userId")
+    @Mapping(source="userId.userId", target="userId")
     ReservationResponse toReservationResponse(Reservation reservation);
     List<ReservationResponse> toReservationResponse(List<Reservation> reservation);
 
@@ -26,8 +26,13 @@ public interface EntityMapper {
     ReservationPassengerResponseDTO toPassengerResponse(ReservationPassenger passenger);
     PaymentResponseDTO toPaymentResponse(Payment payment);
 
+    @Mapping(source = "masterPassengerList", target = "masterPassengers")
     UserProfileResponseDTO toUserProfileResponse(User user);
     List<UserProfileResponseDTO> toUserProfileResponse(List<User> user);
     UserSummaryResponseDTO toUserSummaryResponse(User user);
+
+
+    MasterPassenger toMasterPassenger(MasterPassenger entity);
+    List<MasterPassenger> toMasterPassenger(List<MasterPassenger> entity);
 
 }

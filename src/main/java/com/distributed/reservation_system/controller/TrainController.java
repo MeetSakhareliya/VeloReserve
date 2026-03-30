@@ -38,8 +38,8 @@ public class TrainController {
     }
 
     @GetMapping("/trip/{tripId}")
-    public ResponseEntity<TrainTripResponseDTO> getTrainTrip(@PathVariable Long trainTripId){
-        TrainTripResponseDTO trainTrip = trainService.getTrainTrip(trainTripId);
+    public ResponseEntity<TrainTripResponseDTO> getTrainTrip(@PathVariable Long tripId){
+        TrainTripResponseDTO trainTrip = trainService.getTrainTrip(tripId);
         return new ResponseEntity<>(trainTrip, HttpStatus.OK);
     }
 }

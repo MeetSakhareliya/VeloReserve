@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = {"masterPassengerList"})
     @Query("SELECT u FROM User u")
-    public List<User> getAllUserProfileList();
+    List<User> getAllUserProfileList();
 
     @EntityGraph(attributePaths = {"masterPassengerList"})
     @Query("SELECT u FROM User u where u.userId = :userId")
