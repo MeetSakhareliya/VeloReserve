@@ -16,6 +16,7 @@ public interface TrainTripRepository extends JpaRepository<TrainTrip, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")}) //Request will wait for 3 second before it throws an error.
     @Query("SELECT t FROM TrainTrip t WHERE t.id = :id")
+    @EntityGraph(attributePaths = {"train"})
     Optional<TrainTrip> findTripWithLock(@Param("id") Long tripId);
 
 //    @Query("SELECT t FROM TrainTrip t JOIN FETCH t.train")

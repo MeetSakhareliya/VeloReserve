@@ -24,6 +24,10 @@ public class Train {
     @Column(nullable = false)
     private String destinationStation;
 
+    @Min(100)
+    @Max(2500)
+    private Integer ticketPrice;
+
     @Min(1)
     @Max(2000)
     private Integer totalCapacity;

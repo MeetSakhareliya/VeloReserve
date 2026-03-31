@@ -3,6 +3,7 @@ package com.distributed.reservation_system.service;
 import com.distributed.reservation_system.dto.ReservationRequest;
 import com.distributed.reservation_system.dto.ReservationResponse;
 import com.distributed.reservation_system.entity.*;
+import com.distributed.reservation_system.enums.PaymentStatus;
 import com.distributed.reservation_system.enums.ReservationStatus;
 import com.distributed.reservation_system.exception.BusinessException;
 import com.distributed.reservation_system.exception.SystemException;
@@ -30,6 +31,7 @@ public class ReservationService {
     private final MasterPassengerRepository masterPassengerRepository;
     private final ReservationRepository reservationRepository;
     private final EntityMapper entityMapper;
+    private final PaymentService paymentService;
 
     @Transactional
     public ReservationResponse bookTicket(ReservationRequest reservationRequest){
@@ -41,11 +43,11 @@ public class ReservationService {
             throw new SystemException("This train is currently in high demand. Please retry.",ex);
         }
 
+        User user = userRepository.findById(reservationRequest.getUserId())
+                .orElseThrow(() -> new BusinessException("User not found"));
+
         List<Long> passengerIds = reservationRequest.getMasterPassengerIdList();
-        List<MasterPassenger> masterPassengerList = masterPassengerRepository.findAllById(passengerIds);  //this will only returns data which are present. So need to check if all ids are available or not.
-        if(trainTrip.getAvailableCapacity()<passengerIds.size()){
-            throw new BusinessException("Not enough seats available");
-        }
+        List<MasterPassenger> masterPassengerList = masterPassengerRepository.findByIdsAndUserId(passengerIds, reservationRequest.getUserId());  //this will only returns data which are present. So need to check if all ids are available or not.
 
         if(masterPassengerList.size() != passengerIds.size()){
             Set<Long> masterListIds = masterPassengerList.stream()
@@ -59,17 +61,24 @@ public class ReservationService {
             throw new ValidationException("The following passenger IDs are invalid: " + missingIds);
         }
 
+        if(trainTrip.getAvailableCapacity()<passengerIds.size()){
+            throw new BusinessException("Not enough seats available");
+        }
+
         trainTrip.setAvailableCapacity(trainTrip.getAvailableCapacity()-passengerIds.size());
         trainTripRepository.save(trainTrip);
         //Todo: payment will be done here first.
 
-        User user = userRepository.findById(reservationRequest.getUserId())
-                .orElseThrow(() -> new BusinessException("User not found"));
+        Payment payment = paymentService.pay(trainTrip.getTrain().getTicketPrice()*passengerIds.size());
+        if(payment.getStatus()!= PaymentStatus.CONFIRMED){
+            throw new BusinessException("Payment failed");
+        }
 
         Reservation reservation = new Reservation();
         reservation.setTrainRun(trainTrip);
         reservation.setUserId(user);
         reservation.setStatus(ReservationStatus.CONFIRMED);
+        reservation.setPaymentId(payment);
 
         List<ReservationPassenger> reservationPassengers = new ArrayList<>();
         masterPassengerList.forEach(p -> reservationPassengers.add(new ReservationPassenger(reservation, p.getName(),p.getAge())));

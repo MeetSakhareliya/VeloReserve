@@ -11,6 +11,7 @@ public class TrainTripResponseDTO {
     private String name;
     private String sourceStation;
     private String destinationStation;
+    private Integer ticketPrice;
     private LocalDateTime departureTime;
     private LocalDateTime arrivalTime;
 }
