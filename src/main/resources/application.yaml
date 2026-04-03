@@ -1,4 +1,4 @@
- spring:
+spring:
   application:
     name: reservation-system
 
@@ -26,7 +26,25 @@
     properties:
       hibernate:
         default_batch_fetch_size: 20
-#
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests=true:
+ #
 #  data:
 #    redis:
 #      host: localhost

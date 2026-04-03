@@ -45,6 +45,7 @@ public class ReservationService {
         }catch (PessimisticLockingFailureException ex){
             throw new SystemException("This train is currently in high demand. Please retry.",ex);
         }
+        entityManager.refresh(trainTrip);
 
         User user = userRepository.findById(reservationRequest.getUserId())
                 .orElseThrow(() -> new BusinessException("User not found"));
@@ -69,7 +70,6 @@ public class ReservationService {
         }
 
         trainTrip.setAvailableCapacity(trainTrip.getAvailableCapacity()-passengerIds.size());
-        entityManager.refresh(trainTrip);
         trainTripRepository.save(trainTrip);
 
         Payment payment = callPaymentOutsideTx(trainTrip, passengerIds);
