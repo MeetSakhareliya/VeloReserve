@@ -39,7 +39,7 @@ public class Reservation {
     @Column(nullable = false, length = 16)
     private ReservationStatus status; // PENDING, CONFIRMED, EXPIRED
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE} )
     @JoinColumn(name = "paymentId")
     private Payment paymentId;
 

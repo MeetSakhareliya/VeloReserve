@@ -13,10 +13,12 @@ import com.distributed.reservation_system.repository.MasterPassengerRepository;
 import com.distributed.reservation_system.repository.ReservationRepository;
 import com.distributed.reservation_system.repository.TrainTripRepository;
 import com.distributed.reservation_system.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final EntityMapper entityMapper;
     private final PaymentService paymentService;
+    private final EntityManager entityManager;
 
     @Transactional
     public ReservationResponse bookTicket(ReservationRequest reservationRequest){
@@ -66,10 +69,10 @@ public class ReservationService {
         }
 
         trainTrip.setAvailableCapacity(trainTrip.getAvailableCapacity()-passengerIds.size());
+        entityManager.refresh(trainTrip);
         trainTripRepository.save(trainTrip);
-        //Todo: payment will be done here first.
 
-        Payment payment = paymentService.pay(trainTrip.getTrain().getTicketPrice()*passengerIds.size());
+        Payment payment = callPaymentOutsideTx(trainTrip, passengerIds);
         if(payment.getStatus()!= PaymentStatus.CONFIRMED){
             throw new BusinessException("Payment failed");
         }
@@ -95,6 +98,11 @@ public class ReservationService {
             4. can we explicitely remove lock before function ends?
 
          */
+    }
+
+    @Transactional(propagation =  Propagation.NOT_SUPPORTED)
+    public Payment callPaymentOutsideTx(TrainTrip trainTrip, List<Long> passengerIds) {
+        return paymentService.pay(trainTrip.getTrain().getTicketPrice()*passengerIds.size()); // this will run in its own TX
     }
 
 }

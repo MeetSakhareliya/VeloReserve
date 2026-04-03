@@ -14,7 +14,10 @@ import java.util.Optional;
 @Repository
 public interface TrainTripRepository extends JpaRepository<TrainTrip, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")}) //Request will wait for 3 second before it throws an error.
+//    @QueryHints({
+//            @QueryHint(name = "jakarta.persistence.lock.timeout", value = "30000"),
+//            @QueryHint(name = "org.hibernate.timeout", value = "30")
+//    }) //Request will wait for 3 second before it throws an error.
     @Query("SELECT t FROM TrainTrip t WHERE t.id = :id")
     @EntityGraph(attributePaths = {"train"})
     Optional<TrainTrip> findTripWithLock(@Param("id") Long tripId);

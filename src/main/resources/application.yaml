@@ -11,6 +11,10 @@
     username: user
     password: password
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-init-sql: "SET lock_timeout = '20s'"
+      maximum-pool-size: 100
+#      connection-timeout: 30000
 
   jpa:
     defer-datasource-initialization: true

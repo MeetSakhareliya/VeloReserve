@@ -16,10 +16,11 @@ import java.util.Random;
 public class PaymentService {
     private final PaymentRepository paymentRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public Payment pay(Integer totalAmount){
         PaymentStatus[] paymentStatuses = PaymentStatus.values();
-        Payment payment = new Payment(BigDecimal.valueOf(totalAmount), "UPI", paymentStatuses[new Random().nextInt(paymentStatuses.length)]);
+        Payment payment = new Payment(BigDecimal.valueOf(totalAmount), "UPI", PaymentStatus.CONFIRMED);
+//        Payment payment = new Payment(BigDecimal.valueOf(totalAmount), "UPI", paymentStatuses[new Random().nextInt(paymentStatuses.length)]);
         paymentRepository.save(payment);
         return payment;
     }
