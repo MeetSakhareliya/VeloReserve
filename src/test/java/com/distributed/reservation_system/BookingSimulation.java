@@ -41,7 +41,7 @@ public class BookingSimulation extends Simulation {
         // Ramp up to 100,000 users over 5 minutes to avoid immediate OS port exhaustion
         setUp(
                 scn.injectOpen(
-                        rampUsers(100000).during(Duration.ofSeconds(10))
+                        rampUsers(100000).during(Duration.ofMinutes(10))
                 )
         ).protocols(httpProtocol);
     }
