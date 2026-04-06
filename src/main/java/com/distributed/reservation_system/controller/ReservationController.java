@@ -1,8 +1,6 @@
 package com.distributed.reservation_system.controller;
 
-import com.distributed.reservation_system.dto.ReservationRequest;
-import com.distributed.reservation_system.dto.ReservationResponse;
-import com.distributed.reservation_system.entity.Reservation;
+import com.distributed.common.dto.ReservationRequest;
 import com.distributed.reservation_system.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +26,9 @@ public class ReservationController {
     private final ReservationService reservationService;
 
     @PostMapping("/")
-    public ResponseEntity<ReservationResponse> doReservation(@Valid @RequestBody ReservationRequest reservationRequest){
-        ReservationResponse reservation = reservationService.bookTicket(reservationRequest);
-        return new ResponseEntity<>(reservation, HttpStatus.OK);
+    public ResponseEntity<String> doReservation(@Valid @RequestBody ReservationRequest reservationRequest){
+        String reservationMessage = reservationService.bookTicket(reservationRequest);
+        return new ResponseEntity<>(reservationMessage, HttpStatus.OK);
     }
 
     @GetMapping("/test")

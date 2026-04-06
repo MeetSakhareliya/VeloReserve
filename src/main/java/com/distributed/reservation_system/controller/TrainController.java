@@ -1,10 +1,7 @@
 package com.distributed.reservation_system.controller;
 
-import com.distributed.reservation_system.dto.TrainTripResponseDTO;
-import com.distributed.reservation_system.entity.Train;
-import com.distributed.reservation_system.entity.TrainTrip;
-import com.distributed.reservation_system.repository.TrainRepository;
-import com.distributed.reservation_system.repository.TrainTripRepository;
+import com.distributed.common.dto.TrainTripResponseDTO;
+import com.distributed.common.entity.Train;
 import com.distributed.reservation_system.service.TrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

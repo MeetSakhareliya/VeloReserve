@@ -1,12 +1,12 @@
 package com.distributed.reservation_system.service;
 
-import com.distributed.reservation_system.dto.TrainTripResponseDTO;
-import com.distributed.reservation_system.entity.Train;
-import com.distributed.reservation_system.entity.TrainTrip;
-import com.distributed.reservation_system.exception.ValidationException;
-import com.distributed.reservation_system.mapper.EntityMapper;
-import com.distributed.reservation_system.repository.TrainRepository;
-import com.distributed.reservation_system.repository.TrainTripRepository;
+import com.distributed.common.dto.TrainTripResponseDTO;
+import com.distributed.common.entity.Train;
+import com.distributed.common.entity.TrainTrip;
+import com.distributed.common.exception.ValidationException;
+import com.distributed.common.mapper.EntityMapper;
+import com.distributed.common.repository.TrainRepository;
+import com.distributed.common.repository.TrainTripRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

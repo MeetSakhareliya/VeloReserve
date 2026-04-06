@@ -1,10 +1,10 @@
 package com.distributed.reservation_system.controller;
 
-import com.distributed.reservation_system.dto.UserProfileResponseDTO;
-import com.distributed.reservation_system.entity.User;
-import com.distributed.reservation_system.exception.ValidationException;
-import com.distributed.reservation_system.mapper.EntityMapper;
-import com.distributed.reservation_system.repository.UserRepository;
+import com.distributed.common.dto.UserProfileResponseDTO;
+import com.distributed.common.entity.User;
+import com.distributed.common.exception.ValidationException;
+import com.distributed.common.mapper.EntityMapper;
+import com.distributed.common.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

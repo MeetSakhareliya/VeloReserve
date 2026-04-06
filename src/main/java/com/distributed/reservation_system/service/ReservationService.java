@@ -1,58 +1,43 @@
 package com.distributed.reservation_system.service;
 
-import com.distributed.reservation_system.dto.ReservationRequest;
-import com.distributed.reservation_system.dto.ReservationResponse;
-import com.distributed.reservation_system.entity.*;
-import com.distributed.reservation_system.enums.PaymentStatus;
-import com.distributed.reservation_system.enums.ReservationStatus;
-import com.distributed.reservation_system.exception.BusinessException;
-import com.distributed.reservation_system.exception.SystemException;
-import com.distributed.reservation_system.exception.ValidationException;
-import com.distributed.reservation_system.mapper.EntityMapper;
-import com.distributed.reservation_system.repository.MasterPassengerRepository;
-import com.distributed.reservation_system.repository.ReservationRepository;
-import com.distributed.reservation_system.repository.TrainTripRepository;
-import com.distributed.reservation_system.repository.UserRepository;
-import jakarta.persistence.EntityManager;
+import com.distributed.common.dto.ReservationRequest;
+import com.distributed.common.entity.*;
+import com.distributed.common.exception.BusinessException;
+import com.distributed.common.exception.ValidationException;
+import com.distributed.common.repository.MasterPassengerRepository;
+import com.distributed.common.repository.UserRepository;
+import com.distributed.reservation_system.kafka.KafkaProducer;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.PessimisticLockingFailureException;
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RScript;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationService {
-    private final TrainTripRepository trainTripRepository;
+
     private final UserRepository userRepository;
     private final MasterPassengerRepository masterPassengerRepository;
-    private final ReservationRepository reservationRepository;
-    private final EntityMapper entityMapper;
-    private final PaymentService paymentService;
-    private final EntityManager entityManager;
+    private final RedissonClient redisson;
+    private final KafkaProducer kafkaProducer;
 
     @Transactional
-    public ReservationResponse bookTicket(ReservationRequest reservationRequest){
-        TrainTrip trainTrip;
-        try{
-            trainTrip = trainTripRepository.findTripWithLock(reservationRequest.getTripId())
-                    .orElseThrow(()-> new ValidationException("Not a valid trip id. Train trip not found"));
-        }catch (PessimisticLockingFailureException ex){
-            throw new SystemException("This train is currently in high demand. Please retry.",ex);
-        }
-        entityManager.refresh(trainTrip);
-
-        User user = userRepository.findById(reservationRequest.getUserId())
-                .orElseThrow(() -> new BusinessException("User not found"));
-
+    public String bookTicket(ReservationRequest reservationRequest){
+        log.info("Reservation request from user:{} for tripId:{}", reservationRequest.getUserId(), reservationRequest.getTripId());
         List<Long> passengerIds = reservationRequest.getMasterPassengerIdList();
-        List<MasterPassenger> masterPassengerList = masterPassengerRepository.findByIdsAndUserId(passengerIds, reservationRequest.getUserId());  //this will only returns data which are present. So need to check if all ids are available or not.
+        if (!userRepository.existsById(reservationRequest.getUserId())) {
+            throw new BusinessException("User not found");
+        }
 
+        List<MasterPassenger> masterPassengerList = masterPassengerRepository.findByIdsAndUserId(passengerIds, reservationRequest.getUserId());  //this will only returns data which are present. So need to check if all ids are available or not.
+        //todo: here we just check if record exist or not rather fetching.
         if(masterPassengerList.size() != passengerIds.size()){
             Set<Long> masterListIds = masterPassengerList.stream()
                     .map(MasterPassenger::getId)
@@ -65,31 +50,16 @@ public class ReservationService {
             throw new ValidationException("The following passenger IDs are invalid: " + missingIds);
         }
 
-        if(trainTrip.getAvailableCapacity()<passengerIds.size()){
-            throw new BusinessException("Not enough seats available");
+        Long remainingSeats = findRemainingSeats(reservationRequest.getTripId(),passengerIds.size());
+        if(remainingSeats == -1) {
+            throw new BusinessException("Not enough seats available or no valid trip.");
         }
+        log.info("Trip:{}, remaining seat:{}", reservationRequest.getTripId(), remainingSeats);
+        //Todo: what if it fails here.
 
-        trainTrip.setAvailableCapacity(trainTrip.getAvailableCapacity()-passengerIds.size());
-        trainTripRepository.save(trainTrip);
+        kafkaProducer.send(reservationRequest);
 
-        Payment payment = callPaymentOutsideTx(trainTrip, passengerIds);
-        if(payment.getStatus()!= PaymentStatus.CONFIRMED){
-            throw new BusinessException("Payment failed");
-        }
-
-        Reservation reservation = new Reservation();
-        reservation.setTrainRun(trainTrip);
-        reservation.setUserId(user);
-        reservation.setStatus(ReservationStatus.CONFIRMED);
-        reservation.setPaymentId(payment);
-
-        List<ReservationPassenger> reservationPassengers = new ArrayList<>();
-        masterPassengerList.forEach(p -> reservationPassengers.add(new ReservationPassenger(reservation, p.getName(),p.getAge())));
-        reservation.setPassengers(reservationPassengers);
-        reservationRepository.save(reservation);
-
-        return entityMapper.toReservationResponse(reservation);
-
+        return "Your request is in progress...";
         /*
 
             1.Lock in traintripRepository but effect in this function.: At the start of function we have applied Transactional annotation so connection scope extend till complete bookTicket function is not executed(Which includes repository call where lock is applied and thus lock also gets extended.
@@ -100,11 +70,23 @@ public class ReservationService {
          */
     }
 
-    @Transactional(propagation =  Propagation.NOT_SUPPORTED)
-    public Payment callPaymentOutsideTx(TrainTrip trainTrip, List<Long> passengerIds) {
-        return paymentService.pay(trainTrip.getTrain().getTicketPrice()*passengerIds.size()); // this will run in its own TX
-    }
+    private Long findRemainingSeats(Long tripId, int size) {
+        String script =
+                "local current = redis.call('get',KEYS[1]); "+
+                "if current and tonumber(current)>=tonumber(ARGV[1]) then "+
+                    "return redis.call('decrby', KEYS[1], ARGV[1]); " +
+                "else " +
+                    "return -1; "+
+                "end;";
 
+        return redisson.getScript().eval(
+                RScript.Mode.READ_WRITE,
+                script,
+                RScript.ReturnType.LONG,
+                Collections.singletonList("train_seats:" + tripId),
+                Integer.valueOf(size)
+        );
+    }
 }
 
 
