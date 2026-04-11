@@ -6,6 +6,7 @@ import com.distributed.common.exception.BusinessException;
 import com.distributed.common.exception.ValidationException;
 import com.distributed.common.repository.MasterPassengerRepository;
 import com.distributed.common.repository.UserRepository;
+import com.distributed.reservation_system.aop.IdempotentReservation;
 import com.distributed.reservation_system.kafka.KafkaProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class ReservationService {
     private final RedissonClient redissonClient;
 
     @Transactional
+    @IdempotentReservation
     public String bookTicket(ReservationRequest reservationRequest){
         log.info("Reservation request from user:{} for tripId:{}", reservationRequest.getUserId(), reservationRequest.getTripId());
         List<Long> passengerIds = reservationRequest.getMasterPassengerIdList();

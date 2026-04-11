@@ -37,6 +37,10 @@ spring:
     topic:
       reservation-request: reservation-request
 
+system-properties:
+  rate-limiter:
+    capacity: 10
+
 management:
   endpoints:
     web:
