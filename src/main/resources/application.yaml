@@ -33,6 +33,7 @@ spring:
     producer:
       linger.ms: 0
       batch.size: 0
+      #do we need data compression?
     topic:
       reservation-request: reservation-request
 

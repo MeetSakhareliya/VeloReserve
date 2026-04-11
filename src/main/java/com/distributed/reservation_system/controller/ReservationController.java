@@ -28,7 +28,7 @@ public class ReservationController {
     @PostMapping("/")
     public ResponseEntity<String> doReservation(@Valid @RequestBody ReservationRequest reservationRequest){
         String reservationMessage = reservationService.bookTicket(reservationRequest);
-        return new ResponseEntity<>(reservationMessage, HttpStatus.OK);
+        return new ResponseEntity<>(reservationMessage, HttpStatus.OK); //todo: Send 202 Accpeted HTTP code. - we have delegated
     }
 
     @GetMapping("/test")

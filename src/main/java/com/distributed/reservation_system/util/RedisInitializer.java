@@ -21,6 +21,9 @@ public class RedisInitializer implements CommandLineRunner {
         trainTripRepository.findAll().forEach(trainTrip ->{
             RAtomicLong redisSeats = redissonClient.getAtomicLong("train_seats:"+trainTrip.getId());
             redisSeats.set(trainTrip.getAvailableCapacity());
+
+            RAtomicLong pendingSeates = redissonClient.getAtomicLong("pending_requests:"+trainTrip.getId());
+            pendingSeates.set(0);
         });
     }
 }

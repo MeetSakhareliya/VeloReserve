@@ -9,8 +9,10 @@ import com.distributed.common.repository.UserRepository;
 import com.distributed.reservation_system.kafka.KafkaProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBucket;
 import org.redisson.api.RScript;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
@@ -27,13 +29,14 @@ public class ReservationService {
     private final MasterPassengerRepository masterPassengerRepository;
     private final RedissonClient redisson;
     private final KafkaProducer kafkaProducer;
+    private final RedissonClient redissonClient;
 
     @Transactional
     public String bookTicket(ReservationRequest reservationRequest){
         log.info("Reservation request from user:{} for tripId:{}", reservationRequest.getUserId(), reservationRequest.getTripId());
         List<Long> passengerIds = reservationRequest.getMasterPassengerIdList();
         if (!userRepository.existsById(reservationRequest.getUserId())) {
-            throw new BusinessException("User not found");
+            throw new BusinessException("User not found"); //todo: Add errorCodes as well.
         }
 
         List<MasterPassenger> masterPassengerList = masterPassengerRepository.findByIdsAndUserId(passengerIds, reservationRequest.getUserId());  //this will only returns data which are present. So need to check if all ids are available or not.
@@ -59,6 +62,9 @@ public class ReservationService {
 
         kafkaProducer.send(reservationRequest);
 
+        redissonClient.getAtomicLong("pending_requests:"+reservationRequest.getTripId()).incrementAndGet(); //Will be used for reconciliation.
+
+
         return "Your request is in progress...";
         /*
 
@@ -71,6 +77,7 @@ public class ReservationService {
     }
 
     private Long findRemainingSeats(Long tripId, int size) {
+        System.out.println(tripId+" "+size);
         String script =
                 "local current = redis.call('get',KEYS[1]); "+
                 "if current and tonumber(current)>=tonumber(ARGV[1]) then "+

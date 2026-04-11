@@ -1,0 +1,46 @@
+package com.distributed.reservation_system.filter;
+
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.Refill;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.time.Duration;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class RateLimiterFilter extends OncePerRequestFilter {
+    private final ProxyManager proxyManager;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String ipAddress = request.getRemoteAddr();
+
+        log.info("Request from:{}",ipAddress);
+
+        BucketConfiguration bucketConfiguration = BucketConfiguration.builder()
+                .addLimit(Bandwidth.classic(1, Refill.intervally(1, Duration.ofSeconds(30))))
+                .build();
+
+        Bucket bucket = proxyManager.builder().build(ipAddress, ()-> bucketConfiguration);
+
+        if(bucket.tryConsume(1)){
+            filterChain.doFilter(request,response); //Todo:uncommente later
+        }else{
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.getWriter().write("Too many requests from:"+ipAddress);
+        }
+    }
+}
