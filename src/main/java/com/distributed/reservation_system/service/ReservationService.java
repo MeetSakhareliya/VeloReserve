@@ -34,9 +34,12 @@ public class ReservationService {
 
     @Transactional
     @IdempotentReservation
-    public String bookTicket(ReservationRequest reservationRequest){
+    public String bookTicket(ReservationRequest reservationRequest, Long userIdFromToken){
         log.info("Reservation request from user:{} for tripId:{}", reservationRequest.getUserId(), reservationRequest.getTripId());
         List<Long> passengerIds = reservationRequest.getMasterPassengerIdList();
+        if(!userIdFromToken.equals(reservationRequest.getUserId())){
+            throw new BusinessException("Token for different userId");
+        }
         if (!userRepository.existsById(reservationRequest.getUserId())) {
             throw new BusinessException("User not found"); //todo: Add errorCodes as well.
         }

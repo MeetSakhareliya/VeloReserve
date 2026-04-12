@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -26,8 +28,10 @@ public class ReservationController {
     private final ReservationService reservationService;
 
     @PostMapping("/")
-    public ResponseEntity<String> doReservation(@Valid @RequestBody ReservationRequest reservationRequest){
-        String reservationMessage = reservationService.bookTicket(reservationRequest);
+    public ResponseEntity<String> doReservation(@Valid @RequestBody ReservationRequest reservationRequest, Authentication authentication){
+        UserDetails userDetails  = (UserDetails) authentication.getPrincipal();
+        Long userId = Long.valueOf(userDetails.getUsername());
+        String reservationMessage = reservationService.bookTicket(reservationRequest, userId);
         return new ResponseEntity<>(reservationMessage, HttpStatus.OK); //todo: Send 202 Accpeted HTTP code. - we have delegated
     }
 
@@ -48,7 +52,7 @@ public class ReservationController {
             executorService.submit(()->{
                 try{
                     cyclicBarrier.await();
-                    reservationService.bookTicket(reservationRequest);
+                    reservationService.bookTicket(reservationRequest, reservationRequest.getUserId());
                     System.out.println("success"+(System.currentTimeMillis()-startTime));
                     successCount.incrementAndGet();
 
