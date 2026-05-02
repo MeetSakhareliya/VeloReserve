@@ -81,6 +81,6 @@ public class ReservationController {
     public ReservationRequest createReservationRequest(Long userId){
         List<Long> masterPassengerList = new ArrayList<>();
         masterPassengerList.add(userId+1000);
-        return new ReservationRequest(userId,masterPassengerList, 37L);
+        return new ReservationRequest(userId,masterPassengerList, 37L,null);
     }
 }
